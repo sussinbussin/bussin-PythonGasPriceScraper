@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import mysql.connector
 from mysql.connector import errorcode
+import config as CONFIG
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -39,10 +40,10 @@ def upload(prices):
     # Connect to DB
     try:
         mydb = mysql.connector.connect(
-            host="127.0.0.1",
-            user="root",
-            password="Matcha8$",
-            database="gas_prices"
+            host=CONFIG.host,
+            user=CONFIG.user,
+            password=CONFIG.password,
+            database=CONFIG.database
         )
     except mysql.connector.Error as err:
         # Create DB and table if it doesn't exist
@@ -50,9 +51,9 @@ def upload(prices):
             print("Database does not exist, creating database")
 
             tempdb = mysql.connector.connect(
-                host="127.0.0.1",
-                user="root",
-                password="Matcha8$",
+                host=CONFIG.host,
+                user=CONFIG.user,
+                password=CONFIG.password,
             )
 
             tempdb.cursor().execute("CREATE DATABASE gas_prices")
