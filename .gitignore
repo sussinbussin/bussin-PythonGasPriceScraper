@@ -1,4 +1,4 @@
 .serverless
 *.pyc
 *.pyo
-.config
+.config.py
