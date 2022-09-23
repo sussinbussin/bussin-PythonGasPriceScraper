@@ -111,10 +111,13 @@ def upload(prices):
     mydb.close()
 
 
-def run(event, context):
+def main(event, context):
+    values = scrape()
+    upload(values)
     current_time = datetime.datetime.now().time()
     name = context.function_name
     logger.info("Your cron function " + name + " ran at " + str(current_time))
 
-values = scrape()
-upload(values)
+	
+if __name__ == "__main__":
+    main('', '')

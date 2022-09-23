@@ -12,12 +12,12 @@ provider:
 
 functions:
   rateHandler:
-    handler: handler.run
+    handler: handler.main
     events:
       # Invoke Lambda function every minute
-      - schedule: rate(10 minute)
-  cronHandler:
-    handler: handler.run
-    events:
-      # Invoke Lambda function every 2nd minute from Mon-Fri
-      - schedule: cron(0/10 * ? * MON-FRI *)
+      - schedule: rate(2 hours)
+  # cronHandler:
+  #   handler: handler.main
+  #   events:
+  #     # Invoke Lambda function every 2nd minute from Mon-Fri
+  #     - schedule: cron(0/10 * ? * MON-FRI *)
