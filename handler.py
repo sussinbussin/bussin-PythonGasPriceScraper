@@ -4,7 +4,12 @@ import requests
 from bs4 import BeautifulSoup
 import mysql.connector
 from mysql.connector import errorcode
-import config as CONFIG
+import os
+
+host=os.environ['HOST']
+user=os.environ['USER']
+password=os.environ['PASSWORD']
+database=os.environ['DATABASE']
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -40,34 +45,34 @@ def upload(prices):
     # Connect to DB
     try:
         mydb = mysql.connector.connect(
-            host=CONFIG.host,
-            user=CONFIG.user,
-            password=CONFIG.password,
-            database=CONFIG.database
+            host=host,
+            user=user,
+            password=password,
+            database=database
         )
     except mysql.connector.Error as err:
         # Create DB and table if it doesn't exist
-        if err.errno == errorcode.ER_BAD_DB_ERROR:
-            logger.error("Database does not exist, creating database")
+        # if err.errno == errorcode.ER_BAD_DB_ERROR:
+        #     logger.error("Database does not exist, creating database")
 
-            tempdb = mysql.connector.connect(
-                host=CONFIG.host,
-                user=CONFIG.user,
-                password=CONFIG.password,
-            )
+        #     tempdb = mysql.connector.connect(
+        #         host=host,
+        #         user=user,
+        #         password=password
+        #     )
 
-            tempdb.cursor().execute("CREATE DATABASE gas_prices")
+        #     tempdb.cursor().execute("CREATE DATABASE gas_prices")
 
-            tempdb.close()
+        #     tempdb.close()
 
-            mydb = mysql.connector.connect(
-                host="127.0.0.1",
-                user="root",
-                password="Matcha8$",
-                database="gas_prices"
-            )
-            # Create Table
-            mydb.cursor().execute("CREATE TABLE gas_price (company varchar(10) NOT NULL, create_date datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, type varchar(10) NOT NULL, price float(3,2), PRIMARY KEY (company, create_date, type))")
+        #     mydb = mysql.connector.connect(
+        #         host=host,
+        #         user=user,
+        #         password=password,
+        #         database=database
+        #     )
+        #     # Create Table
+        #     mydb.cursor().execute("CREATE TABLE gas_price (company varchar(10) NOT NULL, create_date datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, type varchar(10) NOT NULL, price float(3,2), PRIMARY KEY (company, create_date, type))")
 
         else:
             print(err)
@@ -81,10 +86,6 @@ def upload(prices):
     mycursor.execute("SELECT company, type, price FROM gas_price ORDER BY create_date DESC, company, type LIMIT 25")
     for (_, _, latestprice), (_, _, newprice) in zip(mycursor, prices):
         rows += 1
-        # print(latestprice)
-        # print(newprice)
-        # print((latestprice is None != newprice is None))
-        # print(str(latestprice) != newprice)
         if latestprice is None and newprice is None:
             continue
         elif (latestprice is None != newprice is None) or str(latestprice) != newprice:
@@ -118,6 +119,3 @@ def main(event, context):
     name = context.function_name
     logger.info("Your cron function " + name + " ran at " + str(current_time))
 
-	
-if __name__ == "__main__":
-    main('', '')
