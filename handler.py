@@ -1,6 +1,6 @@
 import datetime
 import logging
-import requests
+from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 import mysql.connector
 from mysql.connector import errorcode
@@ -20,9 +20,13 @@ def scrape():
 
     # Try to get HTML of website
     try:
-        html_doc = requests.get("https://www.motorist.sg/petrol-prices").content
+        url = 'https://www.motorist.sg/petrol-prices'
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        request = Request(url, headers=headers)
+        mybytes = urlopen(request).read()
+        html_doc = mybytes.decode("utf8")
     except:
-        print("The Website is Down")
+        logger.info("The Website is Down")
         return results   
 
     soup = BeautifulSoup(html_doc, 'html.parser')
@@ -51,31 +55,7 @@ def upload(prices):
             database=database
         )
     except mysql.connector.Error as err:
-        # Create DB and table if it doesn't exist
-        # if err.errno == errorcode.ER_BAD_DB_ERROR:
-        #     logger.error("Database does not exist, creating database")
-
-        #     tempdb = mysql.connector.connect(
-        #         host=host,
-        #         user=user,
-        #         password=password
-        #     )
-
-        #     tempdb.cursor().execute("CREATE DATABASE gas_prices")
-
-        #     tempdb.close()
-
-        #     mydb = mysql.connector.connect(
-        #         host=host,
-        #         user=user,
-        #         password=password,
-        #         database=database
-        #     )
-        #     # Create Table
-        #     mydb.cursor().execute("CREATE TABLE gas_price (company varchar(10) NOT NULL, create_date datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, type varchar(10) NOT NULL, price float(3,2), PRIMARY KEY (company, create_date, type))")
-
-        else:
-            print(err)
+        print(err)
 
     mycursor = mydb.cursor(buffered=True)
 
@@ -118,4 +98,3 @@ def main(event, context):
     current_time = datetime.datetime.now().time()
     name = context.function_name
     logger.info("Your cron function " + name + " ran at " + str(current_time))
-
