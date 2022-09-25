@@ -48,7 +48,7 @@ def upload(prices):
     except mysql.connector.Error as err:
         # Create DB and table if it doesn't exist
         if err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("Database does not exist, creating database")
+            logger.error("Database does not exist, creating database")
 
             tempdb = mysql.connector.connect(
                 host=CONFIG.host,
@@ -97,13 +97,13 @@ def upload(prices):
         changed = True
     # Close connection if no price changes
     elif changed == False:
-        print("No changes in price")
+        logger.info("No changes in price")
         mydb.close()
         return
 
     # Template SQL statement
     sql = "INSERT INTO gas_price (company, type, price) VALUES (%s, %s, %s)"
-    print("Prices updated")
+    logger.info("Prices updated")
 
     # Insert scraped prices into DB and close connection
     mycursor.executemany(sql, prices)
