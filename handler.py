@@ -4,8 +4,14 @@ from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 import mysql.connector
 from mysql.connector import errorcode
+from sshtunnel import SSHTunnelForwarder
 import os
 
+ssh_host=os.environ['SSH_HOST']
+ssh_port=os.environ['SSH_PORT']
+ssh_pkey=os.environ['SSH_PKEY']
+ssh_user=os.environ['SSH_USER']
+rds_port=os.environ['RDS_PORT']
 host=os.environ['HOST']
 user=os.environ['USER']
 password=os.environ['PASSWORD']
@@ -94,7 +100,15 @@ def upload(prices):
 
 def main(event, context):
     values = scrape()
-    upload(values)
+    with SSHTunnelForwarder(
+        (ssh_host, ssh_port),
+        ssh_username=ssh_user,
+        ssh_pkey=ssh_pkey,
+        remote_bind_address=(host, rds_port)
+    ) as tunnel:
+        tunnel.start()
+        upload(values)
+
     current_time = datetime.datetime.now().time()
     name = context.function_name
     logger.info("Your cron function " + name + " ran at " + str(current_time))
