@@ -2,20 +2,29 @@ import datetime
 import logging
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
-import mysql.connector
-from mysql.connector import errorcode
+import pymysql
 from sshtunnel import SSHTunnelForwarder
 import os
 
-ssh_host=os.environ['SSH_HOST']
-ssh_port=os.environ['SSH_PORT']
-ssh_pkey=os.environ['SSH_PKEY']
-ssh_user=os.environ['SSH_USER']
-rds_port=os.environ['RDS_PORT']
-host=os.environ['HOST']
-user=os.environ['USER']
-password=os.environ['PASSWORD']
-database=os.environ['DATABASE']
+# ssh_host=os.environ['SSH_HOST']
+# ssh_port=os.environ['SSH_PORT']
+# ssh_pkey=os.environ['SSH_PKEY']
+# ssh_user=os.environ['SSH_USER']
+# rds_port=os.environ['RDS_PORT']
+# host=os.environ['HOST']
+# user=os.environ['USER']
+# password=os.environ['PASSWORD']
+# database=os.environ['DATABASE']
+
+ssh_host="ec2-13-251-124-102.ap-southeast-1.compute.amazonaws.com"
+ssh_port=22
+ssh_pkey="test.pem"
+ssh_user="ec2-user"
+rds_port=3306
+host='database-2.c6arcj1huuv4.ap-southeast-1.rds.amazonaws.com'
+user="admin"
+password="BustANut69"
+database="gas_prices"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -51,19 +60,9 @@ def scrape():
     return sorted(results, key=lambda x: (x[0].lower(), x[1]))
     
 
-def upload(prices):
-    # Connect to DB
-    try:
-        mydb = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database
-        )
-    except mysql.connector.Error as err:
-        print(err)
+def upload(mydb, prices):
 
-    mycursor = mydb.cursor(buffered=True)
+    mycursor = mydb.cursor()
 
     changed = False
     rows = 0
@@ -85,12 +84,14 @@ def upload(prices):
     # Close connection if no price changes
     elif changed == False:
         logger.info("No changes in price")
+        print("No changes in price")
         mydb.close()
         return
 
     # Template SQL statement
     sql = "INSERT INTO gas_price (company, type, price) VALUES (%s, %s, %s)"
     logger.info("Prices updated")
+    print("Prices updated")
 
     # Insert scraped prices into DB and close connection
     mycursor.executemany(sql, prices)
@@ -100,14 +101,18 @@ def upload(prices):
 
 def main(event, context):
     values = scrape()
-    with SSHTunnelForwarder(
+    tunnel =  SSHTunnelForwarder(
         (ssh_host, ssh_port),
         ssh_username=ssh_user,
         ssh_pkey=ssh_pkey,
         remote_bind_address=(host, rds_port)
-    ) as tunnel:
-        tunnel.start()
-        upload(values)
+    )
+    tunnel.start()
+    db = pymysql.connect(
+    host="127.0.0.1", user=user,
+    password=password, port=tunnel.local_bind_port, database=database
+    )
+    upload(db, values)
 
     current_time = datetime.datetime.now().time()
     name = context.function_name
