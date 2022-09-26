@@ -2,4 +2,3 @@
 *.pyc
 *.pyo
 .config.py
-*.pem
