@@ -2,4 +2,4 @@
 *.pyc
 *.pyo
 .config.py
-test.pem
+*.pem
