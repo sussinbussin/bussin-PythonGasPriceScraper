@@ -4,6 +4,16 @@ service: petrolscraper
 
 frameworkVersion: '3'
 
+environment:
+  ssh_host: "ec2-13-251-124-102.ap-southeast-1.compute.amazonaws.com"
+  ssh_port: 22
+  ssh_pkey: "test.pem"
+  ssh_user: "ec2-user"
+  rds_port: 3306
+  host: 'database-2.c6arcj1huuv4.ap-southeast-1.rds.amazonaws.com'
+  user: "admin"
+  password: "BustANut69"
+  database: "gas_prices"
 
 provider:
   name: aws
@@ -21,3 +31,5 @@ functions:
   #   events:
   #     # Invoke Lambda function every 2nd minute from Mon-Fri
   #     - schedule: cron(0/10 * ? * MON-FRI *)
+
+
