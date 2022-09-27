@@ -20,6 +20,7 @@ def scrape():
 
     # Try to get HTML of website
     try:
+        logger.info("Finding website")
         url = 'https://www.motorist.sg/petrol-prices'
         headers = {'User-Agent': 'Mozilla/5.0'}
         request = Request(url, headers=headers)
@@ -41,12 +42,24 @@ def scrape():
         for i in range(len(brands)):
             price = prices[i + 1].text.replace("$", "") if prices[i + 1].text != "-" else None
             results.append((brands[i], fueltype, price))
-
+    
     return sorted(results, key=lambda x: (x[0].lower(), x[1]))
     
 
 def upload(prices):
     # Connect to DB
+    # try:
+    #     logger.info("Trying to connect to Database")
+    #     mydb = mysql.connector.connect(
+    #         host=host,
+    #         user=user,
+    #         password=password,
+    #         database=database
+    #     )
+    # except mysql.connector.Error as err:
+    #     logger.error(err)
+    
+    # Temp Code To be Removed
     try:
         mydb = mysql.connector.connect(
             host=host,
@@ -55,7 +68,31 @@ def upload(prices):
             database=database
         )
     except mysql.connector.Error as err:
-        print(err)
+        # Create DB and table if it doesn't exist
+        if err.errno == errorcode.ER_BAD_DB_ERROR:
+            logger.error("Database does not exist, creating database")
+
+            tempdb = mysql.connector.connect(
+                host=host,
+                user=user,
+                password=password,
+            )
+
+            tempdb.cursor().execute("CREATE DATABASE gas_prices")
+
+            tempdb.close()
+
+            mydb = mysql.connector.connect(
+                host=host,
+                user=user,
+                password=password,
+                database=database
+            )
+            # Create Table
+            mydb.cursor().execute("CREATE TABLE gas_price (company varchar(10) NOT NULL, create_date datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, type varchar(10) NOT NULL, price float(3,2), PRIMARY KEY (company, create_date, type))")
+
+        else:
+            logger.erro(err)
 
     mycursor = mydb.cursor(buffered=True)
 
