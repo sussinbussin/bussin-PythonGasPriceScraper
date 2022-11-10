@@ -89,10 +89,10 @@ def upload(prices):
                 database=database
             )
             # Create Table
-            mydb.cursor().execute("CREATE TABLE gas_price (company varchar(10) NOT NULL, create_date datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, type varchar(10) NOT NULL, price float(3,2), PRIMARY KEY (company, create_date, type))")
+            mydb.cursor().execute("CREATE TABLE gas_price (company varchar(10) NOT NULL, date_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, gas_type varchar(10) NOT NULL, price float(3,2), PRIMARY KEY (company, date_time, gas_type))")
 
         else:
-            logger.erro(err)
+            logger.error(err)
 
     mycursor = mydb.cursor(buffered=True)
 
@@ -100,7 +100,7 @@ def upload(prices):
     rows = 0
 
     # Checking if price changed since last scrape
-    mycursor.execute("SELECT company, type, price FROM gas_price ORDER BY create_date DESC, company, type LIMIT 25")
+    mycursor.execute("SELECT company, gas_type, price FROM gas_price ORDER BY date_time DESC, company, gas_type LIMIT 25")
     for (_, _, latestprice), (_, _, newprice) in zip(mycursor, prices):
         rows += 1
         if latestprice is None and newprice is None:
@@ -120,7 +120,7 @@ def upload(prices):
         return
 
     # Template SQL statement
-    sql = "INSERT INTO gas_price (company, type, price) VALUES (%s, %s, %s)"
+    sql = "INSERT INTO gas_price (company, gas_type, price) VALUES (%s, %s, %s)"
     logger.info("Prices updated")
 
     # Insert scraped prices into DB and close connection
@@ -132,6 +132,7 @@ def upload(prices):
 def main(event, context):
     values = scrape()
     upload(values)
+
     current_time = datetime.datetime.now().time()
     name = context.function_name
     logger.info("Your cron function " + name + " ran at " + str(current_time))
